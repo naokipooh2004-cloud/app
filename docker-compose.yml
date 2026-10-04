@@ -1,0 +1,90 @@
+services:
+  postiz:
+    image: ghcr.io/gitroomhq/postiz-app:latest
+    container_name: postiz
+    restart: always
+    env_file:
+      - .env
+    environment:
+      # --- URLs ---
+      # 外部からアクセスする URL。本番では https のドメインに変更する。
+      MAIN_URL: "${MAIN_URL:-http://localhost:4007}"
+      FRONTEND_URL: "${FRONTEND_URL:-http://localhost:4007}"
+      NEXT_PUBLIC_BACKEND_URL: "${NEXT_PUBLIC_BACKEND_URL:-http://localhost:4007/api}"
+      # コンテナ内部の API アドレス（通常は変更不要）
+      BACKEND_INTERNAL_URL: "http://localhost:3000"
+
+      # --- セキュリティ ---
+      # 必ず各環境で一意のランダム値にすること: openssl rand -base64 32
+      JWT_SECRET: "${JWT_SECRET}"
+
+      # --- データベース / Redis ---
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-postiz-user}:${POSTGRES_PASSWORD:-postiz-password}@postiz-postgres:5432/${POSTGRES_DB:-postiz-db-local}"
+      REDIS_URL: "redis://postiz-redis:6379"
+
+      # --- 動作設定 ---
+      IS_GENERAL: "true"
+      DISABLE_REGISTRATION: "${DISABLE_REGISTRATION:-false}"
+
+      # --- ストレージ（ローカル保存） ---
+      STORAGE_PROVIDER: "local"
+      UPLOAD_DIRECTORY: "/uploads"
+      NEXT_PUBLIC_UPLOAD_DIRECTORY: "/uploads"
+    ports:
+      - "${POSTIZ_PORT:-4007}:4007"
+    volumes:
+      - postiz-config:/config/
+      - postiz-uploads:/uploads/
+    networks:
+      - postiz-network
+    depends_on:
+      postiz-postgres:
+        condition: service_healthy
+      postiz-redis:
+        condition: service_healthy
+
+  postiz-postgres:
+    image: postgres:17-alpine
+    container_name: postiz-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-postiz-user}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postiz-password}"
+      POSTGRES_DB: "${POSTGRES_DB:-postiz-db-local}"
+    volumes:
+      - postgres-volume:/var/lib/postgresql/data
+    networks:
+      - postiz-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postiz-user} -d ${POSTGRES_DB:-postiz-db-local}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  postiz-redis:
+    image: redis:7.2
+    container_name: postiz-redis
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - postiz-redis-data:/data
+    networks:
+      - postiz-network
+
+volumes:
+  postgres-volume:
+    external: false
+  postiz-redis-data:
+    external: false
+  postiz-config:
+    external: false
+  postiz-uploads:
+    external: false
+
+networks:
+  postiz-network:
+    external: false

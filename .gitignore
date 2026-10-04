@@ -1,0 +1,13 @@
+# 環境変数（シークレットを含むのでコミットしない）
+.env
+.env.local
+*.env
+!.env.example
+
+# ログ / 一時ファイル
+*.log
+.DS_Store
+
+# アップロード等のローカルデータ（Docker volume 外に出した場合）
+/uploads/
+/config/
