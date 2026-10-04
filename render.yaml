@@ -1,0 +1,22 @@
+# Render Blueprint — これがあると Render が自動で設定を読み込みます。
+# https://render.com で「New +」→「Blueprint」→ このリポジトリを選ぶだけ。
+services:
+  - type: web
+    name: fx-advisor-api
+    runtime: node
+    plan: free
+    branch: claude/upbeat-archimedes-3riykk
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      # 為替レート取得元（無料・キー不要）
+      - key: RATES_PROVIDER
+        value: frankfurter
+      # AI 相談を使う場合のみ、Render の画面で値を設定してください（任意）。
+      # https://console.anthropic.com/ で発行した sk-ant-... を入れます。
+      - key: ANTHROPIC_API_KEY
+        sync: false

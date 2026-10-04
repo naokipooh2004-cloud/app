@@ -2,6 +2,17 @@
 
 為替（FX）のテクニカル分析・AI チャット相談・経済指標カレンダー・レート表示を提供するバックエンド API ＋ Web UI です。
 
+## 公開（Render へのデプロイ）
+
+リポジトリ直下の `render.yaml` により、[Render](https://render.com) で数クリックで公開できます（ターミナル不要）。
+
+1. https://render.com で GitHub アカウントでサインイン
+2. 「New +」→「Blueprint」→ このリポジトリを選択 → `render.yaml` が読み込まれる → 「Apply」
+3. （任意）AI 相談を使う場合は、サービスの Environment で `ANTHROPIC_API_KEY` を設定
+4. 発行された URL（例 `https://fx-advisor-api.onrender.com`）を開く
+
+為替レートは `frankfurter`（無料・キー不要）から自動取得します。無料プランはアクセスが無いと一時停止し、次回アクセス時に数十秒で復帰します。
+
 ## 技術スタック
 
 - Node.js (>= 18.17) / TypeScript / Express
