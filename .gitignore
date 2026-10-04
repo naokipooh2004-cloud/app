@@ -1,13 +1,15 @@
-# 環境変数（シークレットを含むのでコミットしない）
+# 依存関係
+node_modules/
+
+# ビルド成果物
+dist/
+
+# 環境変数（APIキーなどを含むためコミットしない）
 .env
 .env.local
-*.env
-!.env.example
+.env.*.local
 
-# ログ / 一時ファイル
+# ログ / OS ファイル
 *.log
 .DS_Store
-
-# アップロード等のローカルデータ（Docker volume 外に出した場合）
-/uploads/
-/config/
+npm-debug.log*

@@ -1,97 +1,153 @@
-# Postiz セルフホスト環境
+# FX Advisor API
 
-[Postiz](https://postiz.com/) は、複数の SNS への投稿を予約・管理できるオープンソースのソーシャルメディア管理ツールです。このリポジトリは、Postiz を公式 Docker イメージで **セルフホスト（自分で起動）** するための構成一式です。
+為替（FX）の **学習・情報提供** を目的としたバックエンド API です。
+テクニカル分析・AI チャット相談・経済指標カレンダー・レート表示を提供します。
 
-## 構成
+> ⚠️ **免責事項**
+> 本アプリが提供する情報は学習・情報提供のみを目的としており、**投資助言や売買の推奨ではありません**。
+> FX は高いリスクを伴い、損失が預託証拠金を上回る可能性があります。投資判断はご自身の責任で行ってください。
 
-- **postiz** — Postiz 本体（`ghcr.io/gitroomhq/postiz-app:latest`）/ ポート `4007`
-- **postiz-postgres** — PostgreSQL 17（データ保存用）
-- **postiz-redis** — Redis 7.2（ジョブキュー / キャッシュ用）
+## 技術スタック
 
-データは Docker の名前付きボリュームに永続化されます。
+- Node.js (>= 18.17) / TypeScript / Express
+- AI チャット相談: Anthropic Claude API（`@anthropic-ai/sdk`）
 
-## 必要なもの
-
-- Docker
-- Docker Compose v2（`docker compose` コマンド）
-
-## セットアップ手順
-
-### 1. 環境変数ファイルを作成
+## セットアップ
 
 ```bash
-cp .env.example .env
+npm install
+cp .env.example .env     # 必要に応じて編集
+npm run dev              # 開発起動（http://localhost:3000）
 ```
 
-### 2. `JWT_SECRET` を生成して設定
-
-ランダムなシークレットを生成します。
+本番ビルド:
 
 ```bash
-openssl rand -base64 32
+npm run build
+npm start
 ```
 
-出力された値を `.env` の `JWT_SECRET` に設定してください。
-
-> ⚠️ 本番環境では、`.env` の `POSTGRES_PASSWORD` も必ず強固な値に変更してください。
-
-### 3. 起動
+テスト・型チェック:
 
 ```bash
-docker compose up -d
+npm test        # テクニカル指標のユニットテスト
+npm run typecheck
 ```
 
-初回はイメージの取得とデータベースの初期化に少し時間がかかります。状態は次で確認できます。
+## 環境変数（`.env`）
 
-```bash
-docker compose ps
-docker compose logs -f postiz
-```
-
-### 4. アクセス
-
-ブラウザで以下を開きます。
-
-```
-http://localhost:4007
-```
-
-最初に表示される画面でアカウントを登録してログインします。
-
-## よく使うコマンド
-
-| 操作 | コマンド |
-|---|---|
-| 起動 | `docker compose up -d` |
-| 停止 | `docker compose down` |
-| ログ確認 | `docker compose logs -f postiz` |
-| 再起動 | `docker compose restart postiz` |
-| 最新イメージへ更新 | `docker compose pull && docker compose up -d` |
-| データも含めて完全削除 | `docker compose down -v` ⚠️ ボリュームが消えます |
-
-## 外部公開 / 本番運用する場合
-
-1. `.env` の URL を実際のドメイン（https）に変更します。
-
-   ```env
-   MAIN_URL=https://postiz.example.com
-   FRONTEND_URL=https://postiz.example.com
-   NEXT_PUBLIC_BACKEND_URL=https://postiz.example.com/api
-   ```
-
-2. Postiz 本体はリバースプロキシ（Nginx / Caddy / Traefik など）の背後に置き、TLS 終端を行うことを推奨します。
-3. 最初のアカウントを作成したら、`.env` の `DISABLE_REGISTRATION=true` にして再起動すると、不特定多数の登録を防げます。
-4. 各 SNS（X / Mastodon / LinkedIn など）との連携は、Postiz の管理画面および各プラットフォームの開発者設定から API キーを登録して行います。
-
-## 環境変数一覧
-
-| 変数 | 説明 | デフォルト |
+| 変数 | 説明 | 既定値 |
 |---|---|---|
-| `JWT_SECRET` | JWT 署名用シークレット（**必須・要変更**） | なし |
-| `MAIN_URL` / `FRONTEND_URL` | 外部アクセス URL | `http://localhost:4007` |
-| `NEXT_PUBLIC_BACKEND_URL` | バックエンド API の URL | `http://localhost:4007/api` |
-| `POSTIZ_PORT` | ホスト側の公開ポート | `4007` |
-| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | DB 認証情報 | `postiz-user` / `postiz-password` / `postiz-db-local` |
-| `DISABLE_REGISTRATION` | 新規登録を無効化 | `false` |
+| `PORT` | 待ち受けポート | `3000` |
+| `ANTHROPIC_API_KEY` | AI 相談（`/api/advice`）に必須。未設定でも他機能は動作 | （なし） |
+| `ADVISOR_MODEL` | AI が使うモデル | `claude-opus-5-5` |
+| `RATES_PROVIDER` | `frankfurter`（無料・キー不要）/ `mock`（外部通信なし） | `frankfurter` |
+| `FRANKFURTER_BASE_URL` | レート取得先 | `https://api.frankfurter.dev/v1` |
 
-詳しい設定は [Postiz 公式ドキュメント](https://docs.postiz.com/) を参照してください。
+> オフライン環境やデモでは `RATES_PROVIDER=mock` を指定すると、外部通信なしでダミーレートで全機能を試せます。
+
+## API エンドポイント
+
+### `GET /api/health`
+稼働確認。AI 相談の有効/無効、使用中のレートプロバイダを返します。
+
+### `GET /api/rates/:pair`
+現在レート。`pair` は `USDJPY` / `USD/JPY` / `EUR-USD` など。
+
+```bash
+curl localhost:3000/api/rates/USDJPY
+```
+```json
+{ "pair": "USD/JPY", "base": "USD", "quote": "JPY", "rate": 149.85, "date": "2026-10-04", "source": "frankfurter (ECB)" }
+```
+
+### `GET /api/rates/:pair/series?days=120`
+終値の時系列（テクニカル分析の元データ）。`days` は 2〜365。
+
+### `GET /api/analysis/:pair?days=120`
+テクニカル分析。SMA / EMA / RSI / MACD を計算し、売買シグナルの **目安** とその根拠を返します。
+
+```bash
+curl "localhost:3000/api/analysis/USDJPY?days=120"
+```
+```json
+{
+  "pair": "USDJPY",
+  "latestClose": 154.83,
+  "indicators": { "sma": {...}, "ema": {...}, "rsi": {...}, "macd": {...} },
+  "signal": {
+    "direction": "buy",
+    "score": 25,
+    "reasons": ["価格が SMA25 より上 → 上昇トレンド寄り", "MACD ヒストグラムが正 → 上昇の勢い"]
+  },
+  "disclaimer": "..."
+}
+```
+
+`signal.score` は -100（強い売り）〜 +100（強い買い）。`direction` は `buy` / `sell` / `neutral`。
+
+### `GET /api/calendar?from=&to=&importance=&currency=`
+経済指標カレンダー。期間内の主要指標（雇用統計・CPI 等）の **目安の予定** を返します。
+
+- `from` / `to`: `YYYY-MM-DD`（既定は今日〜14日後）
+- `importance`: `low` / `medium` / `high`
+- `currency`: 3文字コードでフィルタ（例: `JPY`）
+
+```bash
+curl "localhost:3000/api/calendar?importance=high&currency=USD"
+```
+
+> 注: カレンダーは毎月の定例指標から生成した *目安* です。正確な日時は公式カレンダー、または実データプロバイダ（Trading Economics / Finnhub など）をご利用ください。`src/services/calendar.ts` の `getEvents()` を差し替えることで実データ連携に対応できます。
+
+### `POST /api/advice`
+AI による FX 学習サポート。`ANTHROPIC_API_KEY` が必要です。
+
+リクエスト:
+```json
+{
+  "question": "RSIの見方を教えて",
+  "pair": "USDJPY",
+  "history": [{ "role": "user", "content": "..." }, { "role": "assistant", "content": "..." }]
+}
+```
+- `pair` を指定すると、その通貨ペアのテクニカル分析を自動で添えて相談します。
+- `history` で会話の継続が可能です（任意、最大20件）。
+
+```bash
+curl -X POST localhost:3000/api/advice \
+  -H 'content-type: application/json' \
+  -d '{"question":"今のUSDJPYのテクニカルをどう見る？","pair":"USDJPY"}'
+```
+
+## プロジェクト構成
+
+```
+src/
+  index.ts              サーバー起動
+  app.ts                Express アプリ / ルート登録 / エラーハンドラ
+  config.ts             環境変数の読み込み
+  types.ts              共通の型
+  lib/
+    disclaimer.ts       免責事項
+    asyncHandler.ts     async ルートの例外処理ラッパ
+  services/
+    indicators.ts       SMA / EMA / RSI / MACD（純粋関数）
+    analysis.ts         指標からシグナルを合成
+    rates.ts            レート取得（frankfurter / mock）
+    calendar.ts         経済指標カレンダー（生成ベース、差し替え可能）
+    advisor.ts          Claude API 連携
+  routes/               各エンドポイント
+test/
+  indicators.test.ts    指標計算のユニットテスト
+```
+
+## 今後の拡張の目安
+
+- レート/OHLC を実データプロバイダ（有料 API）に切り替え、より高精度な分析に
+- 経済指標カレンダーを実データ API に連携
+- フロントエンド（Web UI）や LINE / Discord bot からの利用
+- 分析結果の通知・アラート機能
+
+---
+
+本プロジェクトは教育・情報提供目的のサンプル実装です。実際の取引判断には利用しないでください。
