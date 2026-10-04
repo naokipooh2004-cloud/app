@@ -36,7 +36,6 @@ export interface AnalysisResult {
     /** 判断の根拠（人間向けの短い説明の配列） */
     reasons: string[];
   };
-  disclaimer: string;
 }
 
 /** 経済指標カレンダーの1イベント */

@@ -1,6 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { config } from "../config.js";
-import { DISCLAIMER_JA } from "../lib/disclaimer.js";
 import type { AnalysisResult } from "../types.js";
 
 /** API キー未設定などで AI 相談が使えないときのエラー */
@@ -11,17 +10,14 @@ export class AdvisorUnavailableError extends Error {
   }
 }
 
-const SYSTEM_PROMPT = `あなたは「FX（外国為替証拠金取引）の学習を手助けする日本語アシスタント」です。
+const SYSTEM_PROMPT = `あなたは FX（外国為替証拠金取引）に精通した日本語アシスタントです。
 
-役割と方針:
-- ユーザーが為替相場・テクニカル分析・ファンダメンタルズ・リスク管理などを「理解」できるよう、中立的で分かりやすく解説します。
-- 特定の売買を断定的に推奨しない（「必ず上がる/買うべき」などと言わない）。あくまで考え方・見方・一般論を示します。
-- 不確実性を正直に伝え、相場に絶対はないことを前提に話します。
-- リスク管理（損切り、ロット管理、レバレッジの危険性）の重要性に自然に触れます。
-- 数値予想や将来価格の断定は避け、「シナリオ」や「一般的な見方」として説明します。
-- 回答は簡潔で構造的に。必要に応じて箇条書きを使います。
+方針:
+- ユーザーの質問に、実践的かつ具体的に答えます。
+- 回答は簡潔で分かりやすく。必要に応じて箇条書きや根拠を示します。
+- 免責事項や過度な前置き・毎回の注意書きは不要です（ユーザーは十分に理解しています）。本題に集中してください。
 
-与えられた「テクニカル分析データ」がある場合は、その指標が一般にどう解釈されるかを説明の材料にしてください（ただし断定的な売買指示にはしない）。`;
+与えられた「テクニカル分析データ」がある場合は、その指標の意味と現在の見立てを踏まえて具体的に解説してください。`;
 
 export interface AdviceRequest {
   /** ユーザーの質問 */
@@ -35,7 +31,6 @@ export interface AdviceRequest {
 export interface AdviceResponse {
   answer: string;
   model: string;
-  disclaimer: string;
 }
 
 let cachedClient: Anthropic | null = null;
@@ -110,7 +105,6 @@ export async function getAdvice(req: AdviceRequest): Promise<AdviceResponse> {
   return {
     answer: answer || "（回答を生成できませんでした）",
     model: response.model,
-    disclaimer: DISCLAIMER_JA,
   };
 }
 

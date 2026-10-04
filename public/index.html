@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ja" data-theme="auto">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FX Advisor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark">FX</span>
+        <h1>FX Advisor</h1>
+      </div>
+      <div class="controls">
+        <label class="field">
+          <span>通貨ペア</span>
+          <input id="pair" type="text" value="USD/JPY" autocomplete="off" spellcheck="false" />
+        </label>
+        <label class="field field-sm">
+          <span>期間(日)</span>
+          <input id="days" type="number" value="120" min="35" max="365" />
+        </label>
+        <button id="analyze" class="btn btn-primary">分析</button>
+      </div>
+    </header>
+
+    <main class="grid">
+      <!-- サマリー -->
+      <section class="card card-summary" id="summaryCard">
+        <div class="summary-rate">
+          <div class="summary-pair" id="sumPair">USD/JPY</div>
+          <div class="summary-price" id="sumPrice">—</div>
+          <div class="summary-meta" id="sumMeta">—</div>
+        </div>
+        <div class="summary-signal">
+          <div class="signal-badge" id="signalBadge" data-dir="neutral">
+            <span id="signalLabel">—</span>
+          </div>
+          <div class="signal-meter" aria-hidden="true">
+            <div class="meter-track">
+              <div class="meter-mid"></div>
+              <div class="meter-fill" id="meterFill"></div>
+            </div>
+            <div class="meter-scale"><span>-100 売り</span><span>0</span><span>買い +100</span></div>
+          </div>
+          <div class="signal-score" id="signalScore">スコア —</div>
+        </div>
+      </section>
+
+      <!-- チャート -->
+      <section class="card card-chart">
+        <div class="card-head">
+          <h2 id="chartTitle">価格チャート</h2>
+          <span class="muted" id="chartRange"></span>
+        </div>
+        <div class="chart-wrap" id="chartWrap">
+          <svg id="chart" preserveAspectRatio="none" role="img" aria-label="価格の推移"></svg>
+          <div class="chart-tooltip" id="chartTip" hidden></div>
+        </div>
+      </section>
+
+      <!-- 指標 -->
+      <section class="card card-indicators">
+        <div class="card-head"><h2>テクニカル指標</h2></div>
+        <div class="tiles" id="tiles">
+          <div class="tile"><div class="tile-label">SMA25</div><div class="tile-value" id="tSma">—</div></div>
+          <div class="tile"><div class="tile-label">EMA12</div><div class="tile-value" id="tEma">—</div></div>
+          <div class="tile"><div class="tile-label">RSI14</div><div class="tile-value" id="tRsi">—</div></div>
+          <div class="tile"><div class="tile-label">MACD Hist.</div><div class="tile-value" id="tMacd">—</div></div>
+        </div>
+        <ul class="reasons" id="reasons"></ul>
+      </section>
+
+      <!-- カレンダー -->
+      <section class="card card-calendar">
+        <div class="card-head">
+          <h2>経済指標カレンダー</h2>
+          <select id="calImportance" class="select">
+            <option value="">すべての重要度</option>
+            <option value="high">高のみ</option>
+            <option value="medium">中以上</option>
+          </select>
+        </div>
+        <ul class="events" id="events"><li class="muted">読み込み中…</li></ul>
+      </section>
+
+      <!-- AIチャット -->
+      <section class="card card-chat">
+        <div class="card-head">
+          <h2>AI 相談</h2>
+          <label class="chk"><input type="checkbox" id="attachAnalysis" checked /> 分析を添付</label>
+        </div>
+        <div class="chat-log" id="chatLog">
+          <div class="chat-msg assistant">
+            FX について何でも聞いてください。「分析を添付」を ON にすると、上の通貨ペアのテクニカル分析を踏まえて回答します。
+          </div>
+        </div>
+        <form class="chat-input" id="chatForm">
+          <textarea id="chatText" rows="2" placeholder="例: 今の USD/JPY のテクニカルをどう見る？" required></textarea>
+          <button class="btn btn-primary" id="chatSend" type="submit">送信</button>
+        </form>
+        <div class="chat-hint muted" id="chatHint"></div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" hidden></div>
+    <script src="app.js" type="module"></script>
+  </body>
+</html>

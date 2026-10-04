@@ -1,11 +1,6 @@
 # FX Advisor API
 
-為替（FX）の **学習・情報提供** を目的としたバックエンド API です。
-テクニカル分析・AI チャット相談・経済指標カレンダー・レート表示を提供します。
-
-> ⚠️ **免責事項**
-> 本アプリが提供する情報は学習・情報提供のみを目的としており、**投資助言や売買の推奨ではありません**。
-> FX は高いリスクを伴い、損失が預託証拠金を上回る可能性があります。投資判断はご自身の責任で行ってください。
+為替（FX）のテクニカル分析・AI チャット相談・経済指標カレンダー・レート表示を提供するバックエンド API ＋ Web UI です。
 
 ## 技術スタック
 
@@ -79,8 +74,7 @@ curl "localhost:3000/api/analysis/USDJPY?days=120"
     "direction": "buy",
     "score": 25,
     "reasons": ["価格が SMA25 より上 → 上昇トレンド寄り", "MACD ヒストグラムが正 → 上昇の勢い"]
-  },
-  "disclaimer": "..."
+  }
 }
 ```
 
@@ -128,7 +122,6 @@ src/
   config.ts             環境変数の読み込み
   types.ts              共通の型
   lib/
-    disclaimer.ts       免責事項
     asyncHandler.ts     async ルートの例外処理ラッパ
   services/
     indicators.ts       SMA / EMA / RSI / MACD（純粋関数）
@@ -137,6 +130,10 @@ src/
     calendar.ts         経済指標カレンダー（生成ベース、差し替え可能）
     advisor.ts          Claude API 連携
   routes/               各エンドポイント
+public/                 Web UI（静的フロントエンド）
+  index.html
+  styles.css
+  app.js
 test/
   indicators.test.ts    指標計算のユニットテスト
 ```
@@ -145,9 +142,4 @@ test/
 
 - レート/OHLC を実データプロバイダ（有料 API）に切り替え、より高精度な分析に
 - 経済指標カレンダーを実データ API に連携
-- フロントエンド（Web UI）や LINE / Discord bot からの利用
 - 分析結果の通知・アラート機能
-
----
-
-本プロジェクトは教育・情報提供目的のサンプル実装です。実際の取引判断には利用しないでください。

@@ -1,3 +1,4 @@
+import path from "node:path";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { adviceRouter } from "./routes/advice.js";
 import { analysisRouter } from "./routes/analysis.js";
@@ -11,19 +12,14 @@ export function createApp() {
   const app = express();
   app.use(express.json({ limit: "256kb" }));
 
-  // API ルート
-  app.use("/api", healthRouter);
-  app.use("/api", ratesRouter);
-  app.use("/api", analysisRouter);
-  app.use("/api", calendarRouter);
-  app.use("/api", adviceRouter);
+  // Web UI（静的フロントエンド）
+  app.use(express.static(path.join(process.cwd(), "public")));
 
-  // ルート: API の簡単な案内
-  app.get("/", (_req, res) => {
+  // API: 簡単な案内
+  app.get("/api", (_req, res) => {
     res.json({
       name: "FX Advisor API",
-      description:
-        "為替の学習・情報提供を目的とした API（投資助言ではありません）",
+      description: "為替のテクニカル分析・AI相談・カレンダー・レートを提供する API",
       endpoints: [
         "GET  /api/health",
         "GET  /api/rates/:pair",
@@ -34,6 +30,13 @@ export function createApp() {
       ],
     });
   });
+
+  // API ルート
+  app.use("/api", healthRouter);
+  app.use("/api", ratesRouter);
+  app.use("/api", analysisRouter);
+  app.use("/api", calendarRouter);
+  app.use("/api", adviceRouter);
 
   // 404
   app.use((_req, res) => {

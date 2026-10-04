@@ -4,7 +4,6 @@ import type {
   PricePoint,
   SignalDirection,
 } from "../types.js";
-import { DISCLAIMER_JA } from "../lib/disclaimer.js";
 import { ema, macd, rsi, sma } from "./indicators.js";
 
 const SMA_PERIOD = 25;
@@ -35,7 +34,6 @@ export function analyze(pair: string, prices: PricePoint[]): AnalysisResult {
     latestClose: latest.close,
     indicators,
     signal: { direction, score, reasons },
-    disclaimer: DISCLAIMER_JA,
   };
 }
 
